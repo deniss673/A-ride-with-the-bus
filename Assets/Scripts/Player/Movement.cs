@@ -1,13 +1,17 @@
 using UnityEngine;
 
-public class Movement : MonoBehaviour
+public class Movement : Player
 {
-    public float moveSpeed = 3f;
     private Rigidbody rb;
     private bool isGrounded=false;
     private float rotationX;
     private float rotationY;
     public float sensitivity;
+    private bool isSprinting;
+
+    private float staminaTimer;
+   
+
 
     private void Start()
     {
@@ -23,6 +27,11 @@ public class Movement : MonoBehaviour
 
         Rotate();
 
+        StaminaManager();
+
+        Sprint();
+
+        
     }
 
     void OnCollisionEnter(Collision other)
@@ -45,9 +54,10 @@ public class Movement : MonoBehaviour
     {
         if (isGrounded)
         {
-            if (Input.GetKeyDown(KeyCode.Space))
+            if (Input.GetKeyDown(KeyCode.Space) && stamina>20)
             {
                 rb.AddForce(Vector3.up * 5, ForceMode.Impulse);
+                stamina = stamina - 20;
             }
         }
     }
@@ -55,7 +65,7 @@ public class Movement : MonoBehaviour
     void PlayerMovement()
     {
         var direction = new Vector3(Input.GetAxis("Horizontal"), 0, Input.GetAxis("Vertical"));
-        transform.Translate(direction * moveSpeed * Time.deltaTime);
+        transform.Translate(direction * movementSpeed * Time.deltaTime);
     }
 
     void Rotate()
@@ -64,6 +74,46 @@ public class Movement : MonoBehaviour
         //rotationY += Input.GetAxis("Mouse Y") * Time.deltaTime * sensitivity;
         //rotationX = Mathf.Clamp(rotationX, -90f, 90f);
         transform.localEulerAngles = new Vector3(0, rotationX, 0);
+    }
+
+    void StaminaManager()
+    {
+        if (isGrounded && !isSprinting && stamina<100)
+        {
+            stamina=stamina+10*Time.deltaTime;
+            
+        }
+        if (stamina < 0)
+        {
+            stamina = 0;
+        }
+        if (isSprinting && stamina > 0)
+        {
+            staminaTimer += Time.deltaTime;
+            if(staminaTimer > 0.2f)
+            {
+                staminaTimer= 0;
+                stamina = stamina - 3;
+            }
+        }
+
+    }
+
+    void Sprint()
+    {
+        if (isGrounded)
+        {
+            if (Input.GetKeyDown(KeyCode.LeftShift) && stamina > 0)
+            {
+                movementSpeed = 30;
+                isSprinting = true;
+            }
+            if (Input.GetKeyUp(KeyCode.LeftShift))
+            {
+                movementSpeed = 5;
+                isSprinting = false;
+            }
+        }
     }
 
 
