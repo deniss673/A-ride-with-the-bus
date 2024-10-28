@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class Movement : Player
+public class Movement : MonoBehaviour
 {
     private Rigidbody rb;
     private bool isGrounded=false;
@@ -10,13 +10,18 @@ public class Movement : Player
     private bool isSprinting;
 
     private float staminaTimer;
-   
+    private Player player;
+    private float sprintCooldown;
+
+    private int movementSpeed=5;
+    private int sprintSpeed=30;
 
 
     private void Start()
     {
         sensitivity = 50f;
         rb=GetComponent<Rigidbody>();
+        player = GetComponent<Player>();
     }
 
     public void Update()
@@ -33,6 +38,8 @@ public class Movement : Player
 
         
     }
+
+
 
     void OnCollisionEnter(Collision other)
     {
@@ -54,10 +61,10 @@ public class Movement : Player
     {
         if (isGrounded)
         {
-            if (Input.GetKeyDown(KeyCode.Space) && stamina>20)
+            if (Input.GetKeyDown(KeyCode.Space) && player.stamina>20)
             {
                 rb.AddForce(Vector3.up * 5, ForceMode.Impulse);
-                stamina = stamina - 20;
+                player.stamina = player.stamina - 20;
             }
         }
     }
@@ -65,7 +72,7 @@ public class Movement : Player
     void PlayerMovement()
     {
         var direction = new Vector3(Input.GetAxis("Horizontal"), 0, Input.GetAxis("Vertical"));
-        transform.Translate(direction * movementSpeed * Time.deltaTime);
+        transform.Translate(direction * player.movementSpeed * Time.deltaTime);
     }
 
     void Rotate()
@@ -78,43 +85,56 @@ public class Movement : Player
 
     void StaminaManager()
     {
-        if (isGrounded && !isSprinting && stamina<100)
+        if (isGrounded && !isSprinting)
         {
-            stamina=stamina+10*Time.deltaTime;
+            player.stamina=player.stamina +10*Time.deltaTime;
             
         }
-        if (stamina < 0)
+        if (player.stamina < 20)
         {
-            stamina = 0;
+            sprintCooldown = 1f;
         }
-        if (isSprinting && stamina > 0)
+        if (isSprinting)
         {
             staminaTimer += Time.deltaTime;
-            if(staminaTimer > 0.2f)
+            if(staminaTimer > 0.05f)
             {
                 staminaTimer= 0;
-                stamina = stamina - 3;
+                player.stamina = player.stamina - 1;
             }
+        }
+        if(sprintCooldown>0 && !isSprinting)
+        {
+            sprintCooldown -= Time.deltaTime;
         }
 
     }
 
     void Sprint()
     {
-        if (isGrounded)
+        if (isGrounded && !(sprintCooldown>0))
         {
-            if (Input.GetKeyDown(KeyCode.LeftShift) && stamina > 0)
+            if (Input.GetKeyDown(KeyCode.LeftShift) && player.stamina > 0)
             {
-                movementSpeed = 30;
-                isSprinting = true;
+                SetSprint(true);
             }
             if (Input.GetKeyUp(KeyCode.LeftShift))
             {
-                movementSpeed = 5;
-                isSprinting = false;
+                SetSprint(false);
             }
         }
+        else if(player.stamina<1)
+        {
+            SetSprint(false);
+        }
     }
+
+    void SetSprint(bool value)
+    {
+        isSprinting = value;
+        player.movementSpeed = value ? sprintSpeed : movementSpeed;
+    }
+
 
 
 }
