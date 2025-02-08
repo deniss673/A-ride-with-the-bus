@@ -271,7 +271,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   terrainPrefab: {fileID: 5811210506339438720, guid: 52ea4de77dd2def449dcb0c6c0c7d6d7, type: 3}
-  playerPrefab: {fileID: 8665534610183278175, guid: 2ea4a01f5aa7f434ba9021117c5f1230, type: 3}
+  playerPrefab: {fileID: 2904372347622091735, guid: eda2edca3643d514fbf600fae3cb2d94, type: 3}
 --- !u!114 &330585549
 MonoBehaviour:
   m_ObjectHideFlags: 0
