@@ -21,6 +21,6 @@ public class Stats : MonoBehaviour
 
     public void ChangeSlider(float value)
     {
-        staminaBar.value = value;
+        //staminaBar.value = value;
     }
 }
