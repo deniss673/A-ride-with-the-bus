@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
@@ -35,12 +36,24 @@ public class Player :  BaseCharacter
         }
     }
 
+    [Header("Combat Variables")]
+    private float combatTimer;
+    private bool isFighting=false;
+    private float lastPunchTime;
+    private int punchComboStage = 0;
+    private float currentPunchClipLength;
+    private bool isAttacking;
+
     void Start()
     {
         PlayerUI = Instantiate(Resources.Load<GameObject>("PlayerUI"));
         _anim = GetComponent<Animator>();
         sensitivity = 50f;
         rb = GetComponent<Rigidbody>();
+        lastPunchTime = Time.time;
+        currentPunchClipLength = 0;
+        isAttacking = false;
+        isFighting = false;
     }
 
     public Player()
@@ -55,36 +68,20 @@ public class Player :  BaseCharacter
     {
         SetStamina();
 
-        if (Input.GetKeyDown(KeyCode.Mouse0))
-        {
-            Punch();
-        }
+        CombatLogic();
 
         MovementLogic();
 
 
     }
 
+
+    #region Movement
+
     void SetStamina()
     {
         PlayerUI.GetComponent<Stats>().ChangeSlider(stamina);
     }
-
-    void Punch()
-    {
-        if (_anim.GetCurrentAnimatorStateInfo(0).IsName("punch1"))
-        {
-            _anim.SetTrigger("isPunching2");
-        }
-        else
-        {
-            _anim.SetTrigger("isPunching");
-        }
-    }
-
-
-
-    #region Movement
     void OnCollisionEnter(Collision other)
     {
         if (other.gameObject.tag == "Ground")
@@ -122,8 +119,6 @@ public class Player :  BaseCharacter
         direction = direction * movementSpeed * Time.deltaTime;
 
         transform.Translate(direction);
-
-        Debug.Log(directionVector);
 
         _anim.SetFloat("forward", directionVector.z);
         _anim.SetFloat("right", directionVector.x);
@@ -196,7 +191,11 @@ public class Player :  BaseCharacter
 
     void MovementLogic()
     {
-        PlayerMovement();
+        if (!isAttacking)
+        {
+            PlayerMovement();
+            Sprint();
+        }
 
         CheckGround();
 
@@ -204,9 +203,90 @@ public class Player :  BaseCharacter
 
         StaminaManager();
 
-        Sprint();
+        
+    }
+    #endregion
+
+    #region Combat
+
+    public void UpdateCurrentPunchClipLength()
+    {
+        AnimationClip[] clips = _anim.runtimeAnimatorController.animationClips;
+        foreach (AnimationClip clip in clips)
+        {
+            if(clip.name == "punch" + punchComboStage)
+                currentPunchClipLength = clip.length/1.5f;
+        }
+    }
+    void Punch()
+    {
+        if (punchComboStage == 2)
+        {
+            punchComboStage = 0;
+        }
+        punchComboStage++;
+        isFighting = true;
+
+        lastPunchTime = Time.time;
+
+        punchComboStage = Mathf.Clamp(punchComboStage, 0, 2);
+
+        _anim.ResetTrigger("isPunching1");
+        _anim.ResetTrigger("isPunching2");
+
+        var animationTrigger = "isPunching" + punchComboStage;
+
+
+        _anim.SetTrigger(animationTrigger);
+        _anim.SetTrigger("combat");
+
+        UpdateCurrentPunchClipLength();
+
 
     }
+
+    void Combo()
+    {
+        if (Time.time - lastPunchTime > currentPunchClipLength-0.1f)
+        {
+            if (Input.GetKeyDown(KeyCode.Mouse0))
+            {
+                Punch();
+                combatTimer = 3;
+            }
+        }
+        if (punchComboStage != 0 && Time.time - lastPunchTime > 1.5f) {
+            punchComboStage = 0;
+        }
+    }
+
+
+    void CombatLogic()
+    {
+        Combo();
+
+        if (isFighting) {
+            combatTimer -= Time.deltaTime;
+        }
+        if (combatTimer < 0 && isFighting) { 
+            isFighting = false;
+            _anim.SetBool("isFighting",false);
+        }
+        
+
+    }
+
+    public void SetAttacking(bool ok)
+    {
+
+        isAttacking = ok;
+    }
+    
+
+
+
+
+
     #endregion
 
 }
