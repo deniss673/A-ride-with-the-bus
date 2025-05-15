@@ -42,7 +42,6 @@ public class RoadCreate : MonoBehaviour
 
 
 
-    BuildingsInstantiator _buildingsInstantiator;
 
 
     void InstantiateSplines(ref GameObject  obj,ref SplineContainer spline, int radius, Vector3 pos, Material mat,string name) 
@@ -74,12 +73,12 @@ public class RoadCreate : MonoBehaviour
 
         obj.transform.position = pos;
 
-        _buildingsInstantiator=obj.AddComponent<BuildingsInstantiator>();
+/*        _buildingsInstantiator=obj.AddComponent<BuildingsInstantiator>();
 
         _buildingsInstantiator.PrepareInstantiator();
 
-        var obj2=_buildingsInstantiator.GetBuildingGameObj();
-        obj2.transform.position = pos;
+        var obj2=_buildingsInstantiator.GetBuildingGameObj();*/
+        /*obj2.transform.position = pos;*/
     }
 
     void Start()
@@ -210,8 +209,8 @@ public class RoadCreate : MonoBehaviour
 
     void MoveKnots(float? diff = null)
     {
-        ParalelizeJobs(diff);
-        _buildingsInstantiator.MoveBuildings(_speed, diff);
+        ParalelizeJobs(diff);/*
+        _buildingsInstantiator.MoveBuildings(_speed, diff);*/
     }
 
 
@@ -228,8 +227,8 @@ public class RoadCreate : MonoBehaviour
         var count = _spline.Spline.Knots.Count();
 
         _spline.Spline.SetTangentMode(count-1,TangentMode.AutoSmooth);
-
-        _buildingsInstantiator.InstantiateBuildings(knot.Position);
+/*
+        _buildingsInstantiator.InstantiateBuildings(knot.Position);*/
 
     }
 
@@ -282,9 +281,9 @@ public class RoadCreate : MonoBehaviour
 
         var target = Quaternion.Euler(0,angle*Mathf.Rad2Deg,0);
 
-        _splineGameObject.transform.rotation = Quaternion.Slerp(_splineGameObject.transform.rotation,target, Time.deltaTime);
-        var obj = _buildingsInstantiator.GetBuildingGameObj();
-        obj.transform.rotation = Quaternion.Slerp(obj.transform.rotation, target, Time.deltaTime);
+        _splineGameObject.transform.rotation = Quaternion.Slerp(_splineGameObject.transform.rotation,target, Time.deltaTime);/*
+        var obj = _buildingsInstantiator.GetBuildingGameObj();*/
+        //obj.transform.rotation = Quaternion.Slerp(obj.transform.rotation, target, Time.deltaTime);
     }
 
     void RecenterTheSpline()

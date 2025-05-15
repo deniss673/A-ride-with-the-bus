@@ -9,6 +9,7 @@ using System;
 using System.Diagnostics.CodeAnalysis;
 using UnityEngine.Audio;
 using UnityEngine.UIElements;
+using System.Collections.Generic;
 
 public class StreetCreate : MonoBehaviour, IRoadComponentsInterface
 {
@@ -34,6 +35,8 @@ public class StreetCreate : MonoBehaviour, IRoadComponentsInterface
 
     [Header("Spawner variables")]
     private float _speed;
+    private float _maxSpeed=0.15f;
+    private float _minSpeed=0;
     private float _distance;
     private int _maxKnots;
     private int _startingKnots = 3;
@@ -42,7 +45,8 @@ public class StreetCreate : MonoBehaviour, IRoadComponentsInterface
     private float _turnChance;
 
     private bool _isCurrentStreet = false;
-
+    private BuildingsManager _buildingsManager;
+    
 
     void InstantiateSplines(ref GameObject obj, ref SplineContainer spline, int radius, Vector3 pos, Material mat, string name)
     {
@@ -80,11 +84,11 @@ public class StreetCreate : MonoBehaviour, IRoadComponentsInterface
         roadMat = Resources.Load<Material>("Map/road material");
         _splineGameObject = this.gameObject;
         hydrant = GameObject.Find("Hydrant");
-        InstantiateSplines(ref _splineGameObject, ref _spline, 6, hydrant.transform.position, roadMat, "Road");
+        InstantiateSplines(ref _splineGameObject, ref _spline, 50, hydrant.transform.position, roadMat, "Road");
 
 
-        _speed = 0.025f;
-        _distance = 15;
+        _speed = 0.15f;
+        _distance = 50;
         _endPos = -100;
         _startPos = new Vector3(0, 0, 0);
         _newPos = _startPos - new Vector3(_distance, 0, 0);
@@ -104,6 +108,8 @@ public class StreetCreate : MonoBehaviour, IRoadComponentsInterface
         _turnChance = 100;
 
         GenerateRoad();
+        _buildingsManager = gameObject.AddComponent<BuildingsManager>();
+        _buildingsManager.PrepareInstantiator();
     }
 
     void Update()
@@ -159,7 +165,6 @@ public class StreetCreate : MonoBehaviour, IRoadComponentsInterface
 
             float random = UnityEngine.Random.Range(min, max);
             z = random;
-            Debug.Log(random);
             _turnChance = 40;
         }
         else
@@ -240,8 +245,12 @@ public class StreetCreate : MonoBehaviour, IRoadComponentsInterface
     #region Interface Functions
     public void MoveKnots(float? diff = null)
     {
+        if (_speed == _minSpeed)
+        {
+            return;
+        }
         var pos = this.gameObject.transform.position;
-        float deltaSpeed = diff != null ? (float)diff * Time.deltaTime * 0.6f : _speed;
+        float deltaSpeed = diff != null ? (float)diff * Time.deltaTime * 3f : _speed;
         if (diff == null)
         {
             pos.x -= deltaSpeed;
@@ -293,14 +302,89 @@ public class StreetCreate : MonoBehaviour, IRoadComponentsInterface
     {
         return transform.TransformPoint(_futureKnot.Position);
     }
+
+    public Vector3 GetFutureKnot()
+    {
+        return transform.TransformPoint(_currentKnot.Position);
+    }
     public bool WentPast(float pos)
     {
-        return pos > _spline.Spline.Knots.Last().Position.x;
+        return pos > transform.TransformPoint(_spline.Spline.Knots.Last().Position).x;
     }
 
     public void SetIsCurrentStreet(bool ok)
     {
         _isCurrentStreet = ok;
     }
+
+    public SplineContainer GetSpline()
+    {
+        return GetComponent<SplineContainer>();
+    }
+    public List<BezierKnot> GetKnots()
+    {
+        return _spline.Spline.Knots.ToList();
+    }
+
+    public Vector3 GetNextKnot(Vector3 position)
+    {
+
+        float minDistance = float.MaxValue;
+        int closestSegmentIndex = -1;
+
+        var splineKnots = _spline.Spline.Knots.ToList();
+
+        for (int i = 0; i < splineKnots.Count - 1; i++)
+        {
+            Vector3 a = splineKnots[i].Position;
+            Vector3 b = splineKnots[i + 1].Position;
+
+            Vector3 closestPoint = ClosestPointOnSegment(a, b, position);
+            float distance = Vector3.Distance(position, closestPoint);
+
+            if (distance < minDistance)
+            {
+                minDistance = distance;
+                closestSegmentIndex = i;
+            }
+        }
+
+        if (closestSegmentIndex >= 0 && closestSegmentIndex + 1 < splineKnots.Count)
+        {
+            return splineKnots[closestSegmentIndex + 1].Position;
+        }
+
+        return splineKnots[splineKnots.Count - 1].Position;
+    }
+
+
+    public void Accelerate()
+    {
+        if(_speed < _maxSpeed) {
+            _speed+= 0.01f;
+        }
+    }
+    public void Deccelerate()
+    {
+        if (_speed > _minSpeed)
+        {
+            _speed= Mathf.Lerp(_speed, _minSpeed, 1f * Time.deltaTime);
+        }
+    }
+    public float GetSpeed()
+    {
+        return _speed;
+    }
     #endregion
+
+
+
+    private Vector3 ClosestPointOnSegment(Vector3 a, Vector3 b, Vector3 point)
+    {
+        Vector3 ab = b - a;
+        float t = Vector3.Dot(point - a, ab) / ab.sqrMagnitude;
+        t = Mathf.Clamp01(t);
+        return a + t * ab;
+    }
+
 }
