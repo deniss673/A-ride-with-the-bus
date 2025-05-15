@@ -11,7 +11,10 @@ public class CameraScript : MonoBehaviour
 
     private bool firstPerson=false;
     private float smoothness=0.125f;
+    private Vector3 _currentVelocity = Vector3.zero;
+    private Vector3 _minOffset = new Vector3(0.5f,0.5f,0.5f);
 
+    
     private void Start()
     {
         sensitivity = 50f;
@@ -30,7 +33,7 @@ public class CameraScript : MonoBehaviour
         if (player == null)
         {
             player = GameObject.FindGameObjectWithTag("Player");
-            transform.position = player.transform.position + new Vector3(0, 1.5f, -3);
+            transform.position = Vector3.Lerp(transform.position,player.transform.position + new Vector3(0, 2.5f, -3), Time.deltaTime);
         }
         float offsetY;
         float offsetZ;
@@ -45,7 +48,10 @@ public class CameraScript : MonoBehaviour
             offsetZ = 3;
         }
         var playerPosition = player.transform.position - player.transform.forward * offsetZ + player.transform.up * offsetY;
-        transform.position = Vector3.Lerp(transform.position, playerPosition, smoothness);
+        var targetPosition = Vector3.SmoothDamp(transform.position, playerPosition, ref _currentVelocity, smoothness);
+
+
+        transform.position = Vector3.SmoothDamp(transform.position, playerPosition, ref _currentVelocity, smoothness);
         transform.localEulerAngles = player.transform.localEulerAngles;
     }
 
@@ -56,6 +62,7 @@ public class CameraScript : MonoBehaviour
             firstPerson = !firstPerson;
         }
     }
+
 
 
 }
