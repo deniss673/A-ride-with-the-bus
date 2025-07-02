@@ -10,7 +10,7 @@ public class BusStop : MonoBehaviour
     }
     void Update()
     {
-        
+
     }
     public void SetStopped()
     {
@@ -20,5 +20,10 @@ public class BusStop : MonoBehaviour
     public bool IsStopped()
     {
         return _stopped;
+    }
+
+    public Vector3 GetPosition()
+    {
+        return gameObject.transform.position;
     }
 }

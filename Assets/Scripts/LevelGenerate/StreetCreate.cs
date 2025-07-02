@@ -10,6 +10,7 @@ using System.Diagnostics.CodeAnalysis;
 using UnityEngine.Audio;
 using UnityEngine.UIElements;
 using System.Collections.Generic;
+using UnityEngine.AI;
 
 public class StreetCreate : MonoBehaviour, IRoadComponentsInterface
 {
@@ -46,6 +47,9 @@ public class StreetCreate : MonoBehaviour, IRoadComponentsInterface
 
     private bool _isCurrentStreet = false;
     private BuildingsManager _buildingsManager;
+
+    private List<NpcScript> _npcs = new List<NpcScript>();
+
     
 
     void InstantiateSplines(ref GameObject obj, ref SplineContainer spline, int radius, Vector3 pos, Material mat, string name)
@@ -110,6 +114,9 @@ public class StreetCreate : MonoBehaviour, IRoadComponentsInterface
         GenerateRoad();
         _buildingsManager = gameObject.AddComponent<BuildingsManager>();
         _buildingsManager.PrepareInstantiator();
+
+        gameObject.AddComponent<NpcSpawner>();
+        //npc.GetComponent<NpcScript>().Spawn();
     }
 
     void Update()
@@ -118,6 +125,7 @@ public class StreetCreate : MonoBehaviour, IRoadComponentsInterface
         {
             CheckKnots();
         }
+
     }
 
     #region Road Generation
@@ -386,5 +394,7 @@ public class StreetCreate : MonoBehaviour, IRoadComponentsInterface
         t = Mathf.Clamp01(t);
         return a + t * ab;
     }
+
+
 
 }

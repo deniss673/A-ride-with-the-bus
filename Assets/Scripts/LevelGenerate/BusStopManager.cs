@@ -1,7 +1,5 @@
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Splines;
-using UnityEngine.UIElements;
 
 public class BusStopManager : MonoBehaviour
 {
@@ -11,9 +9,20 @@ public class BusStopManager : MonoBehaviour
     private float _distance;
     private SplineContainer _spline;
     private float _splineLength;
+    private GameObject _busStopGo;
+    public bool show = false;
+
     void Start()
     {
         Prepare();
+    }
+
+    private void Update()
+    {
+        if (show)
+        {
+            show = false;
+        }
     }
 
     void Prepare()
@@ -66,10 +75,33 @@ public class BusStopManager : MonoBehaviour
         yRot.y -= 180;
         go.transform.localEulerAngles = yRot;
 
-        var npc = Instantiate(Resources.Load<GameObject>("Map/npc1"));
-        npc.transform.parent = transform;
-        npc.transform.localPosition = position;
+        /*        var npc = Instantiate(Resources.Load<GameObject>("Map/npc1"));
+                npc.transform.SetParent(transform, true);
+                npc.transform.localPosition = finalPosition;
+                var streetCreateScript = GetComponent<StreetCreate>();*/
 
+
+        _busStopGo = go;
+    }
+
+    public Vector3 GetRandomPositionInBusStop()
+    {
+        var boxGo = _busStopGo.transform.GetChild(2);
+
+        var box = boxGo.GetComponent<BoxCollider>();
+        Vector3 localCenter = box.center;
+        Vector3 localSize = box.size;
+
+        Vector3 localRandom = new Vector3(
+            Random.Range(-localSize.x / 2f, localSize.x / 2f),
+            Random.Range(-localSize.y / 2f, localSize.y / 2f),
+            Random.Range(-localSize.z / 2f, localSize.z / 2f)
+        );
+        Vector3 worldPoint = box.transform.TransformPoint(localCenter + localRandom);
+
+        var finalPos = transform.InverseTransformPoint(worldPoint);
+
+        return finalPos;
     }
 
 

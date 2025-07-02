@@ -7,7 +7,13 @@ public class Menu : MonoBehaviour
     GameObject menu;
     void Start()
     {
-        menu=Instantiate(menuPrefab);
+        if (menuPrefab != null)
+        {
+            menu = Instantiate(menuPrefab);
+        }
+        UnityEngine.Cursor.lockState = CursorLockMode.None;
+        UnityEngine.Cursor.visible = true;
+
     }
 
     void Update()
@@ -18,8 +24,10 @@ public class Menu : MonoBehaviour
 
     public void StartGame()
     {
-        SceneManager.LoadScene("SampleScene");
+        SceneManager.LoadScene("Game");
     }
+
+
 
     public void Options()
     {
@@ -40,4 +48,6 @@ public class Menu : MonoBehaviour
     {
         SceneManager.LoadScene("Menu");
     }
+
+
 }

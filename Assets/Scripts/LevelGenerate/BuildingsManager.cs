@@ -1,10 +1,7 @@
-using NUnit.Framework;
 using UnityEngine;
 using System.Collections.Generic;
 using UnityEngine.Splines;
 using System.Linq;
-using Unity.VisualScripting;
-using Unity.AI.Navigation;
 
 public class BuildingsManager : MonoBehaviour
 {
@@ -16,7 +13,6 @@ public class BuildingsManager : MonoBehaviour
     private List<BezierKnot> _knots;
     private Vector3 _endPos;
     private bool _isIntersection = false;
-    
 
 
     void GetBuildingsPrefab()
@@ -28,6 +24,7 @@ public class BuildingsManager : MonoBehaviour
             _buildings.Add(building);
         }
     }
+
 
 
     public void PrepareInstantiator(bool isIntersection = false, bool isOnRight = false)
@@ -56,10 +53,9 @@ public class BuildingsManager : MonoBehaviour
         {
             SpawnBuildingsOnStreet(isOnRight);
         }
+        var propsmanager = gameObject.AddComponent<PropsManager>();
+        propsmanager.Prepare(true);
 
-        var comp = transform.AddComponent<NavMeshSurface>();
-        comp.collectObjects = CollectObjects.Children;
-        comp.BuildNavMesh();
 
     }
 
@@ -153,8 +149,8 @@ public class BuildingsManager : MonoBehaviour
                 else
                 {
                     notSpawned=false;
-                    var propsmanager=building.AddComponent<PropsManager>();
-                    propsmanager.Prepare(right);
+                    /*var propsmanager=building.AddComponent<PropsManager>();
+                    propsmanager.Prepare(right);*/
                 }
             }
             distance++;

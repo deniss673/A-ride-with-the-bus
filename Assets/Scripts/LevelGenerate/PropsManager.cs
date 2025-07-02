@@ -13,14 +13,30 @@ public class PropsManager : MonoBehaviour
     float _forwardDistance = 20f;
     float _distance = 0;
     bool _right = false;
+    StreetCreate _street;
+
+    struct Pos
+    {
+        public Vector3 position;
+        public Vector3 rotation;
+    }
 
     public void Prepare(bool right)
     {
+        _street = GetComponent<StreetCreate>();
+        if (_street == null)
+            return;
         GetDistance();
         GetPropsPrefab();
-        SpawnAlongTheBuilding(true);
-        SpawnAlongTheBuilding(false,false);
-        SpawnAlongTheBuilding(false, true);
+
+        SpawnAlongTheStreet(true, true);
+        SpawnAlongTheStreet(true, false,false);
+        SpawnAlongTheStreet(true, false,true);
+
+        SpawnAlongTheStreet(false, true);
+        SpawnAlongTheStreet(false, false, false);
+        SpawnAlongTheStreet(false, false, true);
+
         _right = right;
     }
 
@@ -47,25 +63,27 @@ public class PropsManager : MonoBehaviour
         return _propsPrefabs[random];
     }
 
-    void SpawnAlongTheBuilding(bool isLamp, bool isTree=false)
+    void SpawnAlongTheStreet(bool right,bool isLamp, bool isTree= false)
     {
         var location = 0f;
         if (isLamp)
         {
-            location =UnityEngine.Random.Range(5, 10);
+            location = UnityEngine.Random.Range(5, 10);
         }
 
-        while(location < _distance)
+        while (location < _distance)
         {
             GameObject prop;
-            if (isLamp) {
+            if (isLamp)
+            {
                 prop = _lamp;
             }
-            else {
+            else
+            {
                 prop = GetRandomPrefab(isTree);
             }
-           
-            var ok=SpawnRandomObject(prop, ref location);
+
+            var ok = SpawnRandomObject(prop, ref location, right);
 
             if (!ok)
             {
@@ -74,7 +92,7 @@ public class PropsManager : MonoBehaviour
 
             var size = prop.GetComponentInChildren<BoxCollider>().size.x;
 
-            if(size > _distance - location)
+            if (size > _distance - location)
             {
                 return;
             }
@@ -82,6 +100,7 @@ public class PropsManager : MonoBehaviour
             location += size + GetRandomDistance(prop.name);
         }
     }
+
 
     float GetRandomDistance(string name)
     {
@@ -95,16 +114,20 @@ public class PropsManager : MonoBehaviour
         }
         return UnityEngine.Random.Range(5, 15);
     }
-    bool SpawnRandomObject(GameObject prop,ref float location)
+    bool SpawnRandomObject(GameObject prop,ref float location,bool right)
     {
-        var spawnPosition = GetObjectOffset(ref location, prop.name);
+        var pos = GetObjectOffset(ref location, prop.name,right);
         
-        GameObject newObject = Instantiate(prop, spawnPosition, gameObject.transform.rotation);
+        GameObject newObject = Instantiate(prop);
         newObject.transform.parent = gameObject.transform;
+        newObject.transform.localPosition = pos.position;
+        newObject.transform.eulerAngles = pos.rotation;
         while (GetOverlap(newObject))
         {
             location++;
-            newObject.transform.position = GetObjectOffset(ref location,prop.name);
+            pos = GetObjectOffset(ref location, prop.name, right);
+            newObject.transform.localPosition = pos.position;
+            newObject.transform.eulerAngles = pos.rotation;
             Physics.SyncTransforms();
             if(_distance < location)
             {
@@ -115,33 +138,59 @@ public class PropsManager : MonoBehaviour
         return true;
     }
 
-    Vector3 GetObjectOffset(ref float location,string name)
+    Pos GetObjectOffset(ref float location,string name,bool right)
     {
         var forwardOffset = GetOffset(name);
+        _street.GetSpline().Evaluate(location / _distance, out var splinePoint, out var tangentV, out var upVector);
+        splinePoint = transform.InverseTransformPoint(splinePoint);
 
-        Vector3 spawnPosition = gameObject.transform.position + gameObject.transform.right * forwardOffset;
-        var offset = location * gameObject.transform.forward;
-        spawnPosition.y += 0.3f;
-        spawnPosition += (_right ? -1 : 1) * offset;
-        return spawnPosition;
+        Vector3 tan = tangentV;
+        Vector3 position = splinePoint;
+
+        Vector3 tangent = tan.normalized;
+
+
+        tangent = transform.InverseTransformDirection(tangent);
+        Vector3 normal = Vector3.Cross(transform.up, tangent).normalized;
+        Vector3 lateralOffset = normal * forwardOffset * (right ? 1f : -1f);
+
+
+
+
+        Vector3 finalPosition = position + lateralOffset;
+
+
+        var rotation = Quaternion.LookRotation(tangent, transform.up);
+        var y = rotation.eulerAngles.y;
+        y += transform.eulerAngles.y;
+        var rot = new Vector3(0, y, 0);
+
+        rot.y -= 180 * (right ? 1 : 0);
+        finalPosition.y += 30f;
+
+        var pos = new Pos();
+        pos.position = finalPosition;
+        pos.rotation = rot;
+
+        return pos;
     }
 
     void GetDistance()
     {
-        _distance = GetComponent<BoxCollider>().size.z;
+        _distance = _street.GetSpline().CalculateLength();
     }
 
     float GetOffset(string name)
     {
         if (name.Contains("tree"))
         {
-            return 20f;
+            return 18;
         }
         if (name.Contains("lamp"))
         {
-            return 25f;
+            return 14f;
         }
-        return 12f;
+        return 25;
     }
 
     bool GetOverlap(GameObject _object)
@@ -159,6 +208,8 @@ public class PropsManager : MonoBehaviour
 
         Collider[] hitColliders = Physics.OverlapBox(center, halfExtents, orientation);
         int i = 0;
+        if (hitColliders.Count() == 1)
+            return false;
 
         foreach (var collider in hitColliders)
         {
@@ -169,5 +220,9 @@ public class PropsManager : MonoBehaviour
         }
         return false;
     }
+
+
+    
+
 
 }

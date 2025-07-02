@@ -1,9 +1,7 @@
-using NUnit.Framework;
 using UnityEngine;
-using UnityEngine.Splines;
 using System.Collections.Generic;
-using Unity.VisualScripting;
-using Unity.AppUI.Core;
+using System;
+using UnityEngine.SceneManagement;
 
 public class StreetManager : MonoBehaviour
 {
@@ -47,6 +45,7 @@ public class StreetManager : MonoBehaviour
 
     private void Update()
     {
+        RemoveStreet();
         CheckPositionOfCurrentStreet();
 
         var street = GetInterface();
@@ -58,12 +57,21 @@ public class StreetManager : MonoBehaviour
 
         RotateSpline();
         _busManager.RotateWheels();
-        if (_index == 5)
+        
+        if (_streetsGameObjects.Count >6)
         {
             return;
         }
 
         AddRoadComponent();
+    }
+
+
+    void CheckWin()
+    {
+        if(_index == 20) {
+            SceneManager.LoadScene("Win");
+        }
     }
 
     #region Generation
@@ -115,7 +123,7 @@ public class StreetManager : MonoBehaviour
         obj.transform.parent = _streets.transform;
 
         obj.transform.position = CalculateLastStreetPos();
-        obj.transform.rotation = CalculateRotation();
+        obj.transform.localRotation = CalculateRotation();
 
         obj.AddComponent<IntersectionCreate>();
 
@@ -134,9 +142,25 @@ public class StreetManager : MonoBehaviour
     #endregion
 
     #region Misc
+    void RemoveStreet()
+    {
+        if (_streetsGameObjects.Count < 6)
+            return;
+        var comp = _streetsGameObjects[0];
+        var index = _streetsGameObjects.IndexOf(_currentSpline);
+        if (index>2 && _currentStreet!=-1)
+        {
+            Destroy(comp);
+            _streetsGameObjects.Remove(comp);
+            
+        }
+    }
+
+
+
     IRoadComponentsInterface GetInterface()
     {
-        _streetsGameObjects[_index - 1].TryGetComponent<IRoadComponentsInterface>(out var roadComponent);
+        _streetsGameObjects[_streetsGameObjects.Count-1].TryGetComponent<IRoadComponentsInterface>(out var roadComponent);
 
         if (roadComponent != null)
         {
@@ -202,18 +226,21 @@ public class StreetManager : MonoBehaviour
             return;
         }
 
-        var comp = _streetsGameObjects[_currentStreet].GetComponent<IRoadComponentsInterface>();
+        var index = _streetsGameObjects.IndexOf(_currentSpline);
+        var comp = _streetsGameObjects[index].GetComponent<IRoadComponentsInterface>();
 
-        if (_streetsGameObjects[_currentStreet+1].transform.position.x < _hydrant.transform.position.x && comp.WentPast(_hydrant.transform.position.x))
+
+        index++;
+        if (_streetsGameObjects[index].transform.position.x < _hydrant.transform.position.x && comp.WentPast(_hydrant.transform.position.x))
         {
             
-            _currentStreet++;
+            //_currentStreet++;
             _onChange = true;
             comp.SetIsCurrentStreet(false);
-            _currentSpline = _streetsGameObjects[_currentStreet]; 
-            comp = _streetsGameObjects[_currentStreet].GetComponent<IRoadComponentsInterface>();
+            _currentSpline = _streetsGameObjects[index]; 
+            comp = _streetsGameObjects[index].GetComponent<IRoadComponentsInterface>();
             comp.SetIsCurrentStreet(true);
-            _busManager.SetCurrentStreet(_streetsGameObjects[_currentStreet]);
+            _busManager.SetCurrentStreet(_streetsGameObjects[index]);
         }
         
     }
@@ -338,11 +365,19 @@ public class StreetManager : MonoBehaviour
         }
     }
     #endregion
+    public int GetNumber(string name)
+    {
+        var parts = name.Split(' ');
 
+        if (int.TryParse(parts[^1], out int number))
+            return number;
+        else
+            throw new FormatException("Ultima parte a stringului nu este un numar valid.");
+    }
 
     #region Bus functions
-    
-    
+
+
 
 
 

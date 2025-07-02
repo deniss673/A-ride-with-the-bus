@@ -10,6 +10,13 @@ TagManager:
   - PlayerAttacks
   - camera
   - NPC
+  - AggresiveNpc
+  - burger
+  - soda
+  - book
+  - health
+  - npcHIT
+  - grid
   layers:
   - Default
   - TransparentFX

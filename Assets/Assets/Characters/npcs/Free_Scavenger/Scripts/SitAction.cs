@@ -3,13 +3,12 @@ using Unity.Behavior;
 using UnityEngine;
 using Action = Unity.Behavior.Action;
 using Unity.Properties;
-using System.Threading.Tasks;
 
 [Serializable, GeneratePropertyBag]
-[NodeDescription(name: "SitAction", story: "[Agent] sits on [seat]", category: "Action", id: "9a77e18807b8ebb3661f16dbeebb1722")]
+[NodeDescription(name: "SitAction", story: "[Self] sits on [Seat]", category: "Action", id: "befd7bf3641e5d217d9626643e6e1735")]
 public partial class SitAction : Action
 {
-    [SerializeReference] public BlackboardVariable<GameObject> Agent;
+    [SerializeReference] public BlackboardVariable<GameObject> Self;
     [SerializeReference] public BlackboardVariable<GameObject> Seat;
 
     protected override Status OnStart()
@@ -19,12 +18,12 @@ public partial class SitAction : Action
 
     protected override Status OnUpdate()
     {
-        if (Agent == null || Seat == null)
+        if (Self == null || Seat == null)
             return Status.Failure;
 
-        var script = Agent.Value.GetComponent<NpcScript>();
+        var script = Self.Value.GetComponent<NpcScript>();
 
-        script.TakeASeat(Seat);
+        script.TakeSeat(Seat.Value.GetComponent<Seat>());
 
 
         return Status.Success;

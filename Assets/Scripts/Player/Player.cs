@@ -1,12 +1,12 @@
-using Cinemachine;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Tracing;
 using System.Linq;
 using Unity.Behavior;
-using Unity.VisualScripting;
+using Unity.Cinemachine;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using UnityEngine.UIElements;
 
@@ -19,7 +19,7 @@ public class Player :  BaseCharacter
     private CinemachineFreeLook _camera;
 
 
-
+    
 
     [Header("Movement Variables")]
     private Rigidbody rb;
@@ -61,7 +61,7 @@ public class Player :  BaseCharacter
         UnityEngine.Cursor.lockState = CursorLockMode.Locked;
         UnityEngine.Cursor.visible = false;
 
-        PlayerUI = Instantiate(Resources.Load<GameObject>("PlayerUI"));
+        PlayerUI = Instantiate(Resources.Load<GameObject>("UI"));
         _anim = GetComponent<Animator>();
         sensitivity = 50f;
         rb = GetComponent<Rigidbody>();
@@ -82,13 +82,33 @@ public class Player :  BaseCharacter
 
     private void Update()
     {
-        SetStamina();
+        //SetStamina();
 
         CombatLogic();
 
         MovementLogic();
 
+        CheckHealth();
 
+    }
+
+
+    void CheckHealth()
+    {
+        if (_health <= 0)
+        {
+            SceneManager.LoadScene("Lost");
+        }
+    }
+
+    public void SetInfiniteHealth()
+    {
+        _health = 20000000;
+    }
+
+    public void SetHealthBack()
+    {
+        _health = 100;
     }
 
 
@@ -350,14 +370,43 @@ public class Player :  BaseCharacter
         return Vector3.Dot(transform.forward, toTarget) > Mathf.Cos(90 * Mathf.Deg2Rad);
     }
 
+
+    private int _damage = 30;
     private void OnTriggerEnter(Collider other)
     {
-        if (other.gameObject.CompareTag("NPC") && isAttacking && hittedSomething == false)
+        if (other.gameObject.tag.ToLower().Contains("npc") && isAttacking && hittedSomething == false)
         {
-            other.gameObject.GetComponent<NpcScript>().TakeDamage(20);
+            other.gameObject.GetComponent<NpcScript>().TakeDamage(_damage * (punchComboStage == 3 ? 2 : 1));
             hittedSomething = true;
         }
+        if(other.gameObject.tag=="npcHIT" && !other.GetComponentInParent<NpcScript>().GetPassiveGraph())
+        {
+            _health -= 1;
+        }
     }
+
+    public void SetDamage(bool value)
+    {
+        if (value)
+        {
+            _damage = 50;
+        }
+        else
+        {
+            _damage = 30;
+        }
+    }
+
+    private int _health = 100;
+    public void GetHeal()
+    {
+        _health += 30;
+    }
+    public int GetHealth()
+    {
+        return _health;
+    }
+
 
 
 

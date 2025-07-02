@@ -1,11 +1,6 @@
-using NUnit.Framework;
 using System.Collections.Generic;
-using System.Linq;
-using Unity.AI.Navigation;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Splines;
-using static Unity.Burst.Intrinsics.X86.Avx;
 
 #region Door
 public class Door
@@ -17,6 +12,8 @@ public class Door
 
     Vector3 _openedFront;
     Vector3 _openedRight;
+
+
 
 
     public Door(GameObject doorGameObj, bool right)
@@ -75,12 +72,12 @@ public class Door
 
     void FrontMovement(bool open)
     {
-        door.transform.localPosition = Vector3.MoveTowards(door.transform.localPosition, open ? _openedFront : closedPosition, Time.deltaTime * 2);
+        door.transform.localPosition = Vector3.MoveTowards(door.transform.localPosition, open ? _openedFront : closedPosition, Time.deltaTime * 10);
     }
 
     void RightMovement(bool open)
     {
-        door.transform.localPosition = Vector3.MoveTowards(door.transform.localPosition, open ? _openedRight : _openedFront, Time.deltaTime * 7);
+        door.transform.localPosition = Vector3.MoveTowards(door.transform.localPosition, open ? _openedRight : _openedFront, Time.deltaTime * 20);
     }
 
     public GameObject GetDoorGameObject()
@@ -109,6 +106,7 @@ public class BusManager : MonoBehaviour
     bool _accelerate = false;
     bool _createNavMesh = false;
 
+    int _currentStreetNumber = 0;
     void Start()
     {
         CreateDoors();
@@ -306,6 +304,7 @@ public class BusManager : MonoBehaviour
         }
         if (!ok)
         {
+            _currentStreetNumber++;
             close = false; 
             ResetBusStop();
             /*var mesh = _currentStreet.GetComponent<NavMeshSurface>();
@@ -373,7 +372,7 @@ public class BusManager : MonoBehaviour
         var pos = _nextStop.transform.position;
         
         
-        Debug.Log(Vector3.Distance(transform.position, _nextStop.transform.position));
+        //Debug.Log(Vector3.Distance(transform.position, _nextStop.transform.position));
 
         var distance = Vector3.Distance(transform.position, pos);
         var busStoped = _streetManager.IsStopped();
@@ -418,6 +417,11 @@ public class BusManager : MonoBehaviour
         }
 
         return doors;
+    }
+
+    public int GetBusStationNumber()
+    {
+        return _currentStreetNumber;
     }
     #endregion
 
